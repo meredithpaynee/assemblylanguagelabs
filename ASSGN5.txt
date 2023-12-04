@@ -1,0 +1,181 @@
+**************************************
+*
+* Name: Meredith Payne
+* PawPrint ID: MAPCPX
+* Date: 11/1/23
+* Lab5
+*
+* Program description:This program takes each number stored in a table,   
+* calculates if it's a prime number or not, and stores the 1 (prime) or 0  
+* (not prime) in an array PRIME. The prime calculation will occur in a     
+* subroutine, which will pass the value back to the main program for       
+* storing.
+* 
+*
+* Pseudocode of Main Program:
+*int main(void)
+*{
+* 	static unsigned int N[] = {1,2,11,14,31,32,37,241,251,252, 255};
+* 	static unsigned int * pointer1, * pointer2;
+* 	static unsigned int prime[10];
+*
+* 	pointer1 = &N[0];
+* 	pointer2 = &prime[0];
+*
+* 	while (*pointer1 != $FF)
+* 	{
+* 		s = sub(*pointer1);
+* 		*pointer2 = s;
+* 		pointer1++;
+* 		pointer2++;
+* 	}
+*}
+*
+*---------------------------------------
+*
+* Pseudocode Subroutine
+*
+* unsigned int CPRIME(unsigned int num)
+*   	unsigned int prime;
+*   	unsigned int remain;
+*   	unsigned int count;
+*  	unsigned int x;
+*
+*	remain = 0;
+*   	count = 0;
+*    	p = 0;
+*    	x = 2;
+*   	
+*	if(num == 1)
+*	{
+*	     p = 0;
+*	}
+*	else
+*	{
+*    	     while (x < num)
+*   	     {
+*   	     	remain = num;
+*	
+*            	while(remain >= x)
+*            	{
+*            	   remain -= x;
+*            	}
+*            	if (remain == 0)
+*            	{
+*           	   count++;
+*            	}
+*            	x++;
+*            }
+*
+*   	     if (count == 0)
+*   	     {
+*            	p = 1;
+*    	     }
+*  	     else
+*  	     {
+*            	p = 0;
+*	     }
+*	}
+*	return p;
+*}
+*	
+***************************************
+* start of data section
+	
+		ORG 	$B000
+N		FCB   1, 2, 11, 14, 31, 32, 37, 241, 251, 252, $FF     
+SENTIN	EQU	$FF
+    
+		ORG 	$B010
+PRIME		RMB   10
+
+* define any other variables that your main program might need here
+* remember that your subroutine must not access any of these variables, including
+* N and PRIME
+ADDRS		RMB	2
+
+		ORG 	$C000
+		LDS	#$01FF		initialize stack pointer
+* start of your program
+		LDX 	#N 			static unsigned int * pointer1 = &N[0];
+		LDY 	#PRIME 		static unsigned int * pointer2 = &PRIME[0];
+WHL 		LDAA 	0,X
+		CMPA	#SENTIN
+		BEQ 	ENDWHL 		while(*pointer1 != SENTIN){
+		STX	ADDRS
+		JSR 	CPRIME
+		PULA
+		STAA	0,Y 			store prime (p in sub) information in PRIME
+		LDX	ADDRS
+		INX 				*pointer1++;
+		INY 				*pointer2++;
+		BRA 	WHL
+ENDWHL 	STOP 				}
+
+
+* NOTE: NO STATIC VARIABLES ALLOWED IN SUBROUTINE
+
+
+		ORG 	$D000
+* start of your subroutine 
+*****FIGURE OUT HOW TO STORE CONTENTS OF X INTO A VARIABLE
+CPRIME	PULX			pull address off the stack
+		DES			
+		PSHX			push address back onto the stack	
+		DES			unsigned int REMAIN;
+		DES			unsigned int COUNT;
+		DES			unsigned int P;
+		DES			unsigned int NUM;
+		DES			unsigned int X;	
+		TSX			SP + 1 = X (top of stack)
+		CLR	0,X		REMAIN = 0;
+		CLR	1,X		COUNT = 0;
+		CLR	2,X		P = 0;
+		STAA	3,X		NUM = PASSED PARAMETER;
+		LDAA	#$02
+		STAA	4,X		X = 2;
+IF1		LDAA	3,X
+		CMPA	#$01	
+		BNE	ELSE1		if(num == 1){
+		CLR	2,X			p = 0;}
+		BRA	DONE
+ELSE1					
+WHL1		LDAA	4,X		else{
+		CMPA	3,X
+		BHS	ENDWHL1		while(x < num){
+		LDAB	3,X
+		STAB	0,X		remain = num;
+WHL2		LDAA	0,X
+		CMPA	4,X
+		BLO	ENDWHL2		while(remain >= x){
+		LDAB	0,X
+		SUBB	4,X			remain -= x;
+		STAB	0,X
+		BRA	WHL2		}
+ENDWHL2	
+IF2		LDAA	0,X		if(remainder == 0){
+		CMPA	#$00
+		BNE	EDIF2
+		INC	1,X			count++;
+		BRA	EDIF2		}//this branch is needed so x will be incremented regardless
+EDIF2 	INC	4,X			x++;
+		BRA	WHL1
+ENDWHL1	
+IF3		LDAA	1,X	
+		CMPA 	#$00
+		BNE	ELSE3		if(count == 0){
+		LDAA	#$01
+		STAA	2,X			p == 1;
+		BRA	DONE		}
+ELSE3		CLR	2,X		else{p == 0;
+		BRA	DONE		}
+**************************************************************
+DONE		LDAA	2,X		load p (prime or not) into register A
+		STAA	7,X
+		INS
+		INS
+		INS
+		INS
+		INS
+		RTS			return p; }
+	
